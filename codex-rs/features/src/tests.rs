@@ -244,6 +244,16 @@ fn remote_control_is_under_development() {
 }
 
 #[test]
+fn remote_connections_is_under_development() {
+    assert_eq!(Feature::RemoteConnections.stage(), Stage::UnderDevelopment);
+    assert_eq!(Feature::RemoteConnections.default_enabled(), false);
+    assert_eq!(
+        feature_for_key("remote_connections"),
+        Some(Feature::RemoteConnections)
+    );
+}
+
+#[test]
 fn workspace_dependencies_is_stable_and_enabled_by_default() {
     assert_eq!(Feature::WorkspaceDependencies.stage(), Stage::Stable);
     assert_eq!(Feature::WorkspaceDependencies.default_enabled(), true);

@@ -212,6 +212,8 @@ pub enum Feature {
     FastMode,
     /// Enable experimental realtime voice conversation mode in the TUI.
     RealtimeConversation,
+    /// Allow Codex Desktop to load saved and discovered remote connections.
+    RemoteConnections,
     /// Connect app-server to the ChatGPT remote control service.
     RemoteControl,
     /// Removed compatibility flag retained as a no-op so old wrappers can
@@ -1025,6 +1027,12 @@ pub const FEATURES: &[FeatureSpec] = &[
     FeatureSpec {
         id: Feature::RealtimeConversation,
         key: "realtime_conversation",
+        stage: Stage::UnderDevelopment,
+        default_enabled: false,
+    },
+    FeatureSpec {
+        id: Feature::RemoteConnections,
+        key: "remote_connections",
         stage: Stage::UnderDevelopment,
         default_enabled: false,
     },
