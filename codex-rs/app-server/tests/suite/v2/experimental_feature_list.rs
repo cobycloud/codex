@@ -312,7 +312,7 @@ async fn experimental_feature_enablement_set_allows_remote_control() -> Result<(
     let codex_home = TempDir::new()?;
     let mut mcp = McpProcess::new(codex_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
-    let remote_control_enabled = false;
+    let remote_control_enabled = true;
     let enablement = BTreeMap::from([("remote_control".to_string(), remote_control_enabled)]);
 
     let actual = set_experimental_feature_enablement(&mut mcp, enablement.clone()).await?;
@@ -320,6 +320,16 @@ async fn experimental_feature_enablement_set_allows_remote_control() -> Result<(
     assert_eq!(
         actual,
         ExperimentalFeatureEnablementSetResponse { enablement }
+    );
+
+    let ConfigReadResponse { config, .. } = read_config(&mut mcp, /*cwd*/ None).await?;
+
+    assert_eq!(
+        config
+            .additional
+            .get("features")
+            .and_then(|features| features.get("remote_control")),
+        Some(&json!(true))
     );
 
     Ok(())
@@ -350,6 +360,36 @@ async fn experimental_feature_enablement_set_allows_remote_connections() -> Resu
             .and_then(|features| features.get("remote_connections")),
         Some(&json!(true))
     );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn experimental_feature_enablement_set_exposes_remote_connections_and_control_in_config_read()
+-> Result<()> {
+    let codex_home = TempDir::new()?;
+    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
+    let enablement = BTreeMap::from([
+        ("remote_connections".to_string(), true),
+        ("remote_control".to_string(), true),
+    ]);
+
+    let actual = set_experimental_feature_enablement(&mut mcp, enablement.clone()).await?;
+
+    assert_eq!(
+        actual,
+        ExperimentalFeatureEnablementSetResponse { enablement }
+    );
+
+    let ConfigReadResponse { config, .. } = read_config(&mut mcp, /*cwd*/ None).await?;
+    let features = config
+        .additional
+        .get("features")
+        .expect("config/read should expose features");
+
+    assert_eq!(features.get("remote_connections"), Some(&json!(true)));
+    assert_eq!(features.get("remote_control"), Some(&json!(true)));
 
     Ok(())
 }
