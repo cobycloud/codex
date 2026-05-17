@@ -326,6 +326,35 @@ async fn experimental_feature_enablement_set_allows_remote_control() -> Result<(
 }
 
 #[tokio::test]
+async fn experimental_feature_enablement_set_allows_remote_connections() -> Result<()> {
+    let codex_home = TempDir::new()?;
+    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
+    let remote_connections_enabled = true;
+    let enablement =
+        BTreeMap::from([("remote_connections".to_string(), remote_connections_enabled)]);
+
+    let actual = set_experimental_feature_enablement(&mut mcp, enablement.clone()).await?;
+
+    assert_eq!(
+        actual,
+        ExperimentalFeatureEnablementSetResponse { enablement }
+    );
+
+    let ConfigReadResponse { config, .. } = read_config(&mut mcp, /*cwd*/ None).await?;
+
+    assert_eq!(
+        config
+            .additional
+            .get("features")
+            .and_then(|features| features.get("remote_connections")),
+        Some(&json!(true))
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn experimental_feature_enablement_set_empty_map_is_no_op() -> Result<()> {
     let codex_home = TempDir::new()?;
     let mut mcp = McpProcess::new(codex_home.path()).await?;
@@ -382,7 +411,7 @@ async fn experimental_feature_enablement_set_rejects_non_allowlisted_feature() -
     );
     assert!(
         error.message.contains(
-            "apps, memories, plugins, remote_control, tool_search, tool_suggest, tool_call_mcp_elicitation"
+            "apps, memories, plugins, remote_connections, remote_control, tool_search, tool_suggest, tool_call_mcp_elicitation"
         ),
         "{}",
         error.message
